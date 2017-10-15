@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<define type="VariableFile" name="サンプルファイル定義" >
+    <common dir="D:/tmp"
+        file="Sample.txt"
+        encode="UTF-8"
+        delimiter="Comma"
+        enclosure="DoubleQuotes"
+        lineFeed="LF" />
+    <header>
+        <column id="date" name="基準日" required="true" length="10" padding="None" />
+        <column id="count" name="レコード件数" required="true" length="10" padding="None" />
+    </header>
+    <body>
+        <column id="userId" name="ユーザーID" required="true" length="20" padding="None" />
+        <column id="userName" name="ユーザー名" required="true" length="50" padding="None" />
+        <column id="password" name="パスワード" required="true" length="128" padding="None" />
+        <column id="tel" name="電話番号" required="false" length="50" padding="None" />
+        <column id="mailAdress" name="メールアドレス" required="false" length="255" padding="None" />
+        <column id="remarks" name="備考" required="false" length="255" padding="None" />
+    </body>
+    <futter>
+    </futter>
+</define>

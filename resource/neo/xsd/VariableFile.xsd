@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <!-- 基本構成 -->
+  <xsd:element name="define">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="common" minOccurs="1" maxOccurs="1" />
+        <xsd:element ref="header" minOccurs="1" maxOccurs="1" />
+        <xsd:element ref="body" minOccurs="1" maxOccurs="1" />
+        <xsd:element ref="futter" minOccurs="1" maxOccurs="1" />
+      </xsd:sequence>
+      <xsd:attribute name="type" type="typeType" use="required" />
+      <xsd:attribute name="name" type="xsd:string" use="required" />
+    </xsd:complexType>
+  </xsd:element>
+
+  <!-- 共通定義の構成 -->
+  <xsd:element name="common">
+    <xsd:complexType>
+      <xsd:attribute name="dir" type="xsd:string" use="required" />
+      <xsd:attribute name="file" type="xsd:string" use="required" />
+      <xsd:attribute name="encode" type="encodeType" use="required" />
+      <xsd:attribute name="delimiter" type="delimiterType" use="required" />
+      <xsd:attribute name="enclosure" type="enclosureType" use="required" />
+      <xsd:attribute name="lineFeed" type="lineFeedType" use="required" />
+    </xsd:complexType>
+  </xsd:element>
+
+  <!-- ヘッダ定義の構成 -->
+  <xsd:element name="header">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="column" minOccurs="0" maxOccurs="unbounded" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+
+  <!-- 明細定義の構成 -->
+  <xsd:element name="body">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="column" minOccurs="1" maxOccurs="unbounded" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+
+  <!-- フッタ定義の構成 -->
+  <xsd:element name="futter">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="column" minOccurs="0" maxOccurs="unbounded" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+
+  <!-- 項目の属性定義 -->
+  <xsd:element name="column">
+    <xsd:complexType>
+      <xsd:attribute name="id" type="xsd:ID" use="required" />
+      <xsd:attribute name="name" type="xsd:string" use="required" />
+      <xsd:attribute name="required" type="xsd:boolean" use="required" />
+      <xsd:attribute name="length" type="xsd:positiveInteger" use="required" />
+      <xsd:attribute name="padding" type="paddingType" use="required" />
+    </xsd:complexType>
+  </xsd:element>
+
+  <!-- データ型定義 -->
+  <!-- type -->
+  <xsd:simpleType name="typeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="VariableFile"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <!-- lineFeed -->
+  <xsd:simpleType name="encodeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="MS932"/>
+      <xsd:enumeration value="euc-jp"/>
+      <xsd:enumeration value="UTF-8"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!-- delimiter -->
+  <xsd:simpleType name="delimiterType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Comma"/>
+      <xsd:enumeration value="Tab"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!-- enclosure -->
+  <xsd:simpleType name="enclosureType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="None"/>
+      <xsd:enumeration value="DoubleQuotes"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!-- lineFeed -->
+  <xsd:simpleType name="lineFeedType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="CRLF"/>
+      <xsd:enumeration value="LF"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!-- padding -->
+  <xsd:simpleType name="paddingType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="None"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+</xsd:schema>
