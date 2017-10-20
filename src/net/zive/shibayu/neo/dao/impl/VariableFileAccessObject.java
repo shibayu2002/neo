@@ -87,6 +87,20 @@ public class VariableFileAccessObject extends AbstractFileAccessObject {
         return stb.toString();
     }
 
+    @Override
+    protected final Row createRow(final String line,
+                final boolean first, final boolean last)
+                        throws NeoSystemException {
+        // TODO 作成中
+        return null;
+    }
+
+    @Override
+    protected void validateRowCheckForRead(
+            final String line, final boolean first, final boolean last)
+                    throws NeoFrameworkException {
+    }
+
     /**
      * 対象項目の値を取得する.
      * @param row 対象のレコード

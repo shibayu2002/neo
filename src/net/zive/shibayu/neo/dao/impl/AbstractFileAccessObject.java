@@ -8,9 +8,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -92,33 +92,138 @@ public abstract class AbstractFileAccessObject
                     reader.readNodeSet("//body/column"));
             futterColumnAtters = createNodeDefList(
                     reader.readNodeSet("//futter/column"));
-            info("header:" + headerColumnAtters);
-            info("body:" + bodyColumnAtters);
-            info("futter:" + futterColumnAtters);
+            config("header:" + headerColumnAtters);
+            config("body:" + bodyColumnAtters);
+            config("futter:" + futterColumnAtters);
         } catch (Exception e) {
             throw new NeoSystemException("NEO-E0001", e);
         }
     }
 
+    /**
+     * データ入力を行う.
+     * <ol>
+     * <li>処理対象ファイルの事前チェックを行う。
+     * <ul>
+     * <li>指定パスの妥当性チェックを行う。
+     * <li>ファイルの存在チェックを行う。<br>
+     * </ul>
+     * <li>ファイル入力を行う。<br>
+     * 行毎にファイルの読込を行いRecordSetにセットする。
+     * <ol>
+     * <li>行のデータチェックを行う。<br>
+     * 入力チェックエラーが発生した場合、
+     * <ul>
+     * <li>recordErrorMode.CANCELの場合、処理を中断し例外をスローする。<br>
+     * エラーが発生する前までの行はRecordSetにセットする。
+     * <li>recordErrorMode.SKIPの場合、対象行の入力を中断し後続行の入力を行う。<br>
+     * 全行の処理後に例外をスローする。
+     * <li>recordErrorMode.IGNOREの場合、エラーを無視し対象レコードの入力を行う。<br>
+     * 全行の処理後に例外をスローする。
+     * <li>recordErrorMode.ROLLBACKの場合、例外をスローする。(*1)<br>
+     * RecordSetはread()呼び出し前の状態とする。
+     * </ul>
+     * <li>RecordSetを返却する。
+     * </ol>
+     * </ol>
+     * ※1 recordErrorMode.ROLLBACKは、backupModeがtrueの場合のみ有効です。<br>
+             * 　　backupModeがfalseの場合は、RecordErrorMode.CANCELと同様の動作となります。<br>
+     *  backupModeがfalseの方が性能が向上します。ROLLBACKを使用しない場合は、
+     *  backupModeにfalseを設定することを推奨します。
+     *
+     * @param rec 読み込んだデータをセットするRecordSet
+     * @throws NeoFrameworkException エラー
+     */
     @Override
-    public final RecordSet read() throws NeoFrameworkException {
+    public final void read(final RecordSet rec) throws NeoFrameworkException {
+        String encode = getEncode();
+
+        RecordSet newRec = new RecordSet();
+        validateFileForRead();
+
+        NeoUserException ue = new NeoUserException("NEO-A0011");
         try {
             File file = getFile();
-            BufferedReader br = new BufferedReader(new FileReader(file));
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(file), encode));
 
-            // TODO ファイル存在チェックを要追加
-            // TODO 文字コードの指定を要追加
-            // TODO split処理を要追加
-            String str = null;
-            while ((str = br.readLine()) != null) {
-                System.out.println(str);
+            String line = null;
+            int i = 0;
+            while ((line = br.readLine()) != null) {
+                boolean first = (i == 0);
+                boolean last = (i == newRec.size() - 1);
+
+                Row row = null;
+                boolean skip = false;
+                try {
+                    validateRowCheckForRead(line, first, last);
+                    row = createRow(line, first, last);
+                    validateRowCheck(row, first, last);
+                } catch (NeoUserException e) {
+                    if (recordErrorMode.equals(RecordErrorMode.ROLLBACK)) {
+                        if (backupMode) {
+                            NeoUserException ce = new NeoUserException(
+                                    "NEO-A0005", i + 1, "ロールバック");
+                            ce.addChild(e);
+                            ue.addChild(ce);
+                        } else {
+                            NeoUserException ce = new NeoUserException(
+                                    "NEO-A0005", i + 1, "中断");
+                            ce.addChild(e);
+                            ue.addChild(ce);
+                        }
+                        break;
+                    } else if (recordErrorMode.equals(RecordErrorMode.SKIP)) {
+                        NeoUserException ce = new NeoUserException(
+                                "NEO-A0005", i + 1, "スキップ");
+                        ce.addChild(e);
+                        ue.addChild(ce);
+                        skip = true;
+                    } else if (recordErrorMode.equals(RecordErrorMode.IGNORE)) {
+                        NeoUserException ce = new NeoUserException(
+                                "NEO-A0005", i + 1, "強制実行");
+                        ce.addChild(e);
+                        ue.addChild(ce);
+                    } else {
+                        NeoUserException ce = new NeoUserException(
+                                "NEO-A0005", i + 1, "中断");
+                        ce.addChild(e);
+                        ue.addChild(ce);
+                        break;
+                    }
+                }
+                if (!skip && row != null) {
+                    if (backupMode) {
+                        newRec.add(row);
+                    } else {
+                        rec.add(row);
+                    }
+                }
+                i++;
             }
 
             br.close();
         } catch (Exception e) {
             throw new NeoSystemException(e);
         }
-        return null;
+
+        if (ue.children().size() > 0) {
+            if (!recordErrorMode.equals(RecordErrorMode.ROLLBACK)) {
+                if (backupMode) {
+                    for (Row row : newRec) {
+                        rec.add(row);
+                    }
+                }
+            }
+
+            throw ue;
+        } else {
+            if (backupMode) {
+                for (Row row : newRec) {
+                    rec.add(row);
+                }
+            }
+        }
     }
 
     /**
@@ -143,6 +248,7 @@ public abstract class AbstractFileAccessObject
      * <li>recordErrorMode.CANCELの場合、処理を中断する。<br>
      * エラーが発生する前までのレコードはファイルに出力する。
      * <li>recordErrorMode.SKIPの場合、対象レコードの出力を中断し後続のレコード出力を行う。
+     * <li>recordErrorMode.IGNOREの場合、エラーを無視し対象レコードの出力を行う。
      * <li>recordErrorMode.ROLLBACKの場合、ファイル出力前の状態に戻す。(※1)<br>
      * バックアップファイルで対象ファイルを上書きする。バックアップファイルは削除する。<br>
      * </ul>
@@ -163,7 +269,7 @@ public abstract class AbstractFileAccessObject
         String lineFeed = getLineFeed();
         String encode = getEncode();
 
-        validateFile();
+        validateFileForWrite();
         String backupPath = createBackup();
         PrintWriter writer = createPrintWriter(encode);
 
@@ -173,41 +279,39 @@ public abstract class AbstractFileAccessObject
             Row row = rec.get(i);
             boolean first = (i == 0);
             boolean last = (i == rec.size() - 1);
-            if (hockBeforeWrite(row)) {
-                boolean skip = false;
-                try {
-                    validateRowCheck(row, first, last);
-                } catch (NeoUserException e) {
-                    if (recordErrorMode.equals(RecordErrorMode.ROLLBACK)
-                            && backupPath != null) {
-                        NeoUserException ce = new NeoUserException(
-                                "NEO-A0005", i, "ロールバック");
-                        ce.addChild(e);
-                        ue.addChild(ce);
-                        break;
-                    } else if (recordErrorMode.equals(RecordErrorMode.SKIP)) {
-                        NeoUserException ce = new NeoUserException(
-                                "NEO-A0005", i, "スキップ");
-                        ce.addChild(e);
-                        ue.addChild(ce);
-                        skip = true;
-                    } else if (recordErrorMode.equals(RecordErrorMode.IGNORE)) {
-                        NeoUserException ce = new NeoUserException(
-                                "NEO-A0005", i, "強制実行");
-                        ce.addChild(e);
-                        ue.addChild(ce);
-                    } else {
-                        NeoUserException ce = new NeoUserException(
-                                "NEO-A0005", i, "中断");
-                        ce.addChild(e);
-                        ue.addChild(ce);
-                        break;
-                    }
+            boolean skip = false;
+            try {
+                validateRowCheck(row, first, last);
+            } catch (NeoUserException e) {
+                if (recordErrorMode.equals(RecordErrorMode.ROLLBACK)
+                        && backupPath != null) {
+                    NeoUserException ce = new NeoUserException(
+                            "NEO-A0005", i + 1, "ロールバック");
+                    ce.addChild(e);
+                    ue.addChild(ce);
+                    break;
+                } else if (recordErrorMode.equals(RecordErrorMode.SKIP)) {
+                    NeoUserException ce = new NeoUserException(
+                            "NEO-A0005", i + 1, "スキップ");
+                    ce.addChild(e);
+                    ue.addChild(ce);
+                    skip = true;
+                } else if (recordErrorMode.equals(RecordErrorMode.IGNORE)) {
+                    NeoUserException ce = new NeoUserException(
+                            "NEO-A0005", i + 1, "強制実行");
+                    ce.addChild(e);
+                    ue.addChild(ce);
+                } else {
+                    NeoUserException ce = new NeoUserException(
+                            "NEO-A0005", i + 1, "中断");
+                    ce.addChild(e);
+                    ue.addChild(ce);
+                    break;
                 }
-                if (!skip) {
-                    writer.print(createWriteRecord(
-                            row, first, last) + lineFeed);
-                }
+            }
+            if (!skip) {
+                writer.print(createWriteRecord(
+                        row, first, last) + lineFeed);
             }
         }
         writer.close();
@@ -296,10 +400,21 @@ public abstract class AbstractFileAccessObject
                 boolean first, boolean last) throws NeoSystemException;
 
     /**
+     * ファイル読込結果からRowを生成する.
+     * @param line 入力元データ
+     * @param first 先頭行判定
+     * @param last 最終行判定
+     * @return Row
+     * @throws NeoSystemException エラー
+     */
+    protected abstract Row createRow(String line,
+                boolean first, boolean last) throws NeoSystemException;
+
+    /**
      * 処理対象ファイルの事前チェックを行う.
      * @throws NeoFrameworkException 事前チェックエラー
      */
-    private void validateFile() throws NeoFrameworkException {
+    private void validateFileForWrite() throws NeoFrameworkException {
         File file = getFile();
         if (file.isDirectory()) {
             throw new NeoUserException("NEO-A0002", file.getPath());
@@ -312,6 +427,24 @@ public abstract class AbstractFileAccessObject
                 throw new NeoUserException("NEO-A0004", file.getPath());
             }
         }
+    }
+
+    /**
+     * 処理対象ファイルの事前チェックを行う.
+     * @throws NeoFrameworkException 事前チェックエラー
+     */
+    private void validateFileForRead() throws NeoFrameworkException {
+        File file = getFile();
+        if (file.isDirectory()) {
+            throw new NeoUserException("NEO-A0002", file.getPath());
+        }
+        if (!file.getParentFile().exists()) {
+            throw new NeoUserException("NEO-A0003", file.getParentFile());
+        }
+        if (!file.exists()) {
+            throw new NeoUserException("NEO-A0010", file.getPath());
+        }
+
     }
 
     /**
@@ -479,22 +612,39 @@ public abstract class AbstractFileAccessObject
     }
 
     /**
+     * レコードの入力チェック.
+     * @param line 行
+     * @param first 先頭行判定
+     * @param last 最終行判定
+     * @throws NeoFrameworkException 入力チェックエラー
+     */
+    protected abstract void validateRowCheckForRead(
+                String line, boolean first, boolean last)
+                throws NeoFrameworkException;
+
+    /**
      * 単項目チェック.
      * @param row レコード
      * @param map 属性
      * @param e エラー格納 Exception
      * @throws NeoFrameworkException システムエラー
      */
-    private void columnCheck(final Row row, final Map<String, String> map,
+    private void columnCheck(final Row row,
+            final Map<String, String> map,
             final NeoUserException e) throws NeoFrameworkException {
         String id = map.get("id");
+        String required = map.get("required");
+
         if (!row.containsKey(id)) {
             e.addChild(new NeoUserException("NEO-A0007", id));
         } else {
             int length = Integer.parseInt(map.get("length"));
             String value = row.getString(id);
+            if ("true".equals(required) && value.length() == 0) {
+                e.addChild(new NeoUserException("NEO-A0012", id));
+            }
             try {
-                if (StringUtil.len(value) > length) {
+                if (StringUtil.lenB(value) > length) {
                     e.addChild(new NeoUserException("NEO-A0009", id));
                 }
             } catch (UnsupportedEncodingException e1) {

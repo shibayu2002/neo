@@ -63,12 +63,12 @@ public class NeoFrameworkExceptionTest extends TestCase {
         e.addChild(new NeoUserException("NEO-A0005", 1, "xxxx"));
         assertEquals(1, e.children().size());
         assertEquals("NEO-A0005:1レコード目でエラーが発生しました。処理をxxxxしました。",
-                e.children().get(0).getMessage());
+                e.children().get(0).getMessage().replaceAll("\r\n.*", ""));
         e.addChild(new NeoUserException("NEO-A0005", 2, "yyyy"));
         assertEquals(2, e.children().size());
         assertEquals("NEO-A0005:1レコード目でエラーが発生しました。処理をxxxxしました。",
-                e.children().get(0).getMessage());
+                e.children().get(0).getMessage().replaceAll("\r\n.*", ""));
         assertEquals("NEO-A0005:2レコード目でエラーが発生しました。処理をyyyyしました。",
-                e.children().get(1).getMessage());
+                e.children().get(1).getMessage().replaceAll("\r\n.*", ""));
     }
 }

@@ -54,12 +54,9 @@ public class NeoUserException extends NeoFrameworkException {
         return children;
     }
 
-    /**
-     * 子エラーを含めたエラーメッセージの一覧を返す.
-     * @return エラーメッセージ一覧文字列
-     */
-    public String getMessages() {
-        return getMessages("");
+    @Override
+    public final String getMessage() {
+        return this.getMessages("");
     }
 
     /**
@@ -69,7 +66,7 @@ public class NeoUserException extends NeoFrameworkException {
      */
     private String getMessages(final String index) {
         StringBuilder stb = new StringBuilder();
-        stb.append(index + this.getMessage()).append("\r\n");
+        stb.append(index + super.getMessage()).append("\r\n");
         for (NeoUserException e : children) {
             stb.append(e.getMessages(index + "\t"));
         }

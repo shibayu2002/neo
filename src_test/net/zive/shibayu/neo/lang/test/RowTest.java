@@ -55,6 +55,7 @@ public class RowTest extends TestCase {
         assertEquals(1, row.getInt("column3"));
         try {
             row.getInt("column4");
+            fail();
         } catch (NumberFormatException e) {
         }
     }

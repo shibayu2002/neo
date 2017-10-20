@@ -11,10 +11,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import net.zive.shibayu.neo.dao.DataAccessObject;
-import net.zive.shibayu.neo.dao.HockFunction;
 import net.zive.shibayu.neo.lang.NeoFrameworkException;
 import net.zive.shibayu.neo.lang.NeoSystemException;
-import net.zive.shibayu.neo.lang.Row;
 import net.zive.shibayu.neo.util.XMLReader;
 
 /**
@@ -41,16 +39,6 @@ public abstract class AbstractDataAccessObject
     private Map<String, String> commonAtters = null;
 
     /**
-     * データ読込み前Hock処理.
-     */
-    private HockFunction beforeReadRowFunc = null;
-
-    /**
-     * データ書込み前Hock処理.
-     */
-    private HockFunction beforeWriteRowFunc = null;
-
-    /**
      * コンストラクタ.
      * <ol>
      * <li>ロガーを設定する。<br>
@@ -75,21 +63,11 @@ public abstract class AbstractDataAccessObject
                     reader.readNode("/define").getAttributes());
             commonAtters = createNodeDef(
                     reader.readNode("//common").getAttributes());
-            info("load xml. define:" + rootAtters);
-            info("common:" + commonAtters);
+            config("load xml. define:" + rootAtters);
+            config("common:" + commonAtters);
         } catch (Exception e) {
             throw new NeoSystemException("NEO-E0001", e);
         }
-    }
-
-    @Override
-    public final void beforeReadRowFunc(final HockFunction f) {
-        beforeReadRowFunc = f;
-    }
-
-    @Override
-    public final void beforeWriteRowFunc(final HockFunction f) {
-        beforeWriteRowFunc = f;
     }
 
     /**
@@ -132,27 +110,11 @@ public abstract class AbstractDataAccessObject
     }
 
     /**
-     * レコード読み込み前Hock処理.
-     * @param row 処理対象レコード
-     * @return 後続処理続行：true, 後続処理スキップ：false
+     * configログ出力.
+     * @param msg メッセージ
      */
-    protected boolean hockBeforeRead(final Row row) {
-        if (beforeReadRowFunc != null) {
-            beforeReadRowFunc.hock(row);
-        }
-        return true;
-    }
-
-    /**
-     * レコード書込み前Hock処理.
-     * @param row 処理対象レコード
-     * @return 後続処理続行：true, 後続処理スキップ：false
-     */
-    protected boolean hockBeforeWrite(final Row row) {
-        if (beforeWriteRowFunc != null) {
-            beforeWriteRowFunc.hock(row);
-        }
-        return true;
+    protected void config(final String msg) {
+        myLogger.config("[NeoFramework] " + msg);
     }
 
     /**

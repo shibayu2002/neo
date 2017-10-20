@@ -36,7 +36,7 @@ public class RecordSetTest extends TestCase {
      * getString()‚ÌƒeƒXƒg.
      */
     public void testToString() {
-        assertEquals("[{column1=null, column4=1.1, column3=1, column2=aaa}]",
+        assertEquals("{[column1=,column4=1.1,column3=1,column2=aaa]}",
                 rec.toString());
     }
 }

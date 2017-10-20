@@ -56,6 +56,7 @@ public class DAOFactoryTest extends TestCase {
         factory.create("FixedFileAccessObjectTest.xml");
         try {
             factory.create("none.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0003:DAO定義ファイル(XML)の読み込みに失敗しました。ファイル=[none.xml]。",
@@ -63,6 +64,7 @@ public class DAOFactoryTest extends TestCase {
         }
         try {
             factory.create("FixedFileAccessObjectErrorTest1.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0002:DAO定義ファイル(XML)が不正です。/define/@typeが定義されていません。",
@@ -70,6 +72,7 @@ public class DAOFactoryTest extends TestCase {
         }
         try {
             factory.create("FixedFileAccessObjectErrorTest2.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0004:DAO定義ファイル(XML)の妥当性検証でエラーが発生しました。"
@@ -78,6 +81,7 @@ public class DAOFactoryTest extends TestCase {
         }
         try {
             factory.create("FixedFileAccessObjectErrorTest3.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0004:DAO定義ファイル(XML)の妥当性検証でエラーが発生しました。"
@@ -94,6 +98,7 @@ public class DAOFactoryTest extends TestCase {
         try {
             DAOFactory.getInstance()
                 .create("FixedFileAccessObjectErrorTest1.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0002:DAO定義ファイル(XML)が不正です。/define/@typeが定義されていません。",
@@ -109,6 +114,7 @@ public class DAOFactoryTest extends TestCase {
         try {
             DAOFactory.getInstance()
                 .create("FixedFileAccessObjectErrorTest2.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0004:DAO定義ファイル(XML)の妥当性検証でエラーが発生しました。"
@@ -125,6 +131,7 @@ public class DAOFactoryTest extends TestCase {
         try {
             DAOFactory.getInstance()
                 .create("FixedFileAccessObjectErrorTest3.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0004:DAO定義ファイル(XML)の妥当性検証でエラーが発生しました。"
@@ -140,6 +147,7 @@ public class DAOFactoryTest extends TestCase {
     public void testCreateError4() throws Exception {
         try {
             DAOFactory.getInstance().create("none.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0003:DAO定義ファイル(XML)の読み込みに失敗しました。ファイル=[none.xml]。",
@@ -155,6 +163,7 @@ public class DAOFactoryTest extends TestCase {
         try {
             DAOFactory.getInstance()
                 .create("FixedFileAccessObjectErrorTest5.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0004:DAO定義ファイル(XML)の妥当性検証でエラーが発生しました。"
@@ -173,6 +182,7 @@ public class DAOFactoryTest extends TestCase {
         try {
             DAOFactory.getInstance()
                 .create("FixedFileAccessObjectErrorTest6.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0004:DAO定義ファイル(XML)の妥当性検証でエラーが発生しました。"
@@ -190,6 +200,7 @@ public class DAOFactoryTest extends TestCase {
         try {
             DAOFactory.getInstance()
                 .create("FixedFileAccessObjectErrorTest7.xml");
+            fail();
         } catch (NeoFrameworkException e) {
             assertEquals(
             "NEO-E0004:DAO定義ファイル(XML)の妥当性検証でエラーが発生しました。"

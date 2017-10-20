@@ -139,7 +139,6 @@ public final class XMLReader {
         Schema schema = factory.newSchema(new StreamSource(is));
         Validator validator = schema.newValidator();
         String xmlStr = getXML();
-        System.out.println(xmlStr);
         validator.validate(new StreamSource(
                 new StringReader(xmlStr)));
     }

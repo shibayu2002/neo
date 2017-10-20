@@ -1,8 +1,6 @@
 package net.zive.shibayu.neo.dao;
 
 import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import net.zive.shibayu.neo.lang.NeoFrameworkException;
@@ -22,11 +20,6 @@ public final class DAOFactory {
     private static DAOFactory instance = new DAOFactory();
 
     /**
-     * 生成済のDataAccessObjectを保持するマップ.
-     */
-    private Map<String, DataAccessObject> daoMap
-                = new HashMap<String, DataAccessObject>();
-    /**
      * データアクセスオブジェクト生成クラスのインスタンスを返す.
      * @return データアクセスオブジェクト生成クラスのインスタンス
      */
@@ -43,8 +36,6 @@ public final class DAOFactory {
 
     /**
      * DAO定義ファイルを読み込みDAOを生成する.
-     * <ul>
-     * <li>初回アクセスの場合
      * <ol>
      * <li>DAO定義ファイルを読込む。
      * <li>DAO定義種別(type)を取得する。
@@ -54,11 +45,6 @@ public final class DAOFactory {
      * <li>DAO定義マップにDataAccessObjectを格納する。
      * <li>DataAccessObjectを返却する。
      * </ol>
-     * <li>初回以降のアクセスの場合
-     * <ol>
-     * <li>DAO定義マップよりパラメタxmlで指定されたDataAccessObjectを取得し返却する。
-     * </ol>
-     * </ul>
      * @param xml DAO定義ファイル
      * @param logger DAOに設定するロガー
      * @return DAO
@@ -66,14 +52,11 @@ public final class DAOFactory {
      */
     public DataAccessObject create(final String xml, final Logger logger)
             throws NeoFrameworkException {
-        if (!daoMap.containsKey(xml)) {
-            XMLReader reader = readDaoXML(xml);
-            String type = getType(reader);
-            schemaValidate(reader, type);
-            DataAccessObject dao = createDataAccessObject(reader, type, logger);
-            daoMap.put(xml, dao);
-        }
-        return daoMap.get(xml);
+        // TODO シングルトン化の検討要。インスタンスは別にしたいがXML読込は一回限りにしたい
+        XMLReader reader = readDaoXML(xml);
+        String type = getType(reader);
+        schemaValidate(reader, type);
+        return createDataAccessObject(reader, type, logger);
     }
 
     /**

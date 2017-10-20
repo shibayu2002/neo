@@ -26,10 +26,10 @@ public interface DataAccessObject {
 
     /**
      * データ入力を行う.
-     * @return RecordSet
+     * @param rec 読み込んだデータをセットするRecordSet
      * @throws NeoFrameworkException エラー
      */
-    RecordSet read() throws NeoFrameworkException;
+    void read(RecordSet rec) throws NeoFrameworkException;
 
     /**
      * データ出力を行う.
@@ -37,18 +37,6 @@ public interface DataAccessObject {
      * @throws NeoFrameworkException エラー
      */
     void write(RecordSet rec) throws NeoFrameworkException;
-
-    /**
-     * データ読込み前レコード単位Hock処理.
-     * @param f Hock関数
-     */
-    void beforeReadRowFunc(HockFunction f);
-
-    /**
-     * データ書込み前レコード単位Hock処理.
-     * @param f Hock関数
-     */
-    void beforeWriteRowFunc(HockFunction f);
 
     /**
      * レコードチェックエラー時の処理方法を設定する.
