@@ -1,5 +1,6 @@
 package net.zive.shibayu.neo.dao.impl;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -7,6 +8,7 @@ import java.util.regex.Pattern;
 import net.zive.shibayu.neo.lang.NeoFrameworkException;
 import net.zive.shibayu.neo.lang.NeoSystemException;
 import net.zive.shibayu.neo.lang.Row;
+import net.zive.shibayu.neo.util.CsvSpliter;
 import net.zive.shibayu.neo.util.XMLReader;
 
 /**
@@ -91,8 +93,36 @@ public class VariableFileAccessObject extends AbstractFileAccessObject {
     protected final Row createRow(final String line,
                 final boolean first, final boolean last)
                         throws NeoSystemException {
-        // TODO 作成中
-        return null;
+        Row row = new Row();
+        String[] values = null;
+        CsvSpliter spliter = null;
+        int index = 0;
+        if ("DoubleQuotes".equals(enclosure)) {
+            spliter = new CsvSpliter(delimiter, "\"");
+        } else {
+            spliter = new CsvSpliter(delimiter, "\0");
+        }
+
+        try {
+            values = spliter.split(line);
+        } catch (UnsupportedEncodingException e) {
+            throw new NeoSystemException(e);
+        }
+
+        if (getHeaderColumnAtters().size() > 0 && first) {
+            for (Map<String, String> map : getHeaderColumnAtters()) {
+                index = setColumn(values, row, index, map);
+            }
+        } else if (getFutterColumnAtters().size() > 0 && last) {
+            for (Map<String, String> map : getFutterColumnAtters()) {
+                index = setColumn(values, row, index, map);
+            }
+        } else {
+            for (Map<String, String> map : getBodyColumnAtters()) {
+                index = setColumn(values, row, index, map);
+            }
+        }
+        return row;
     }
 
     @Override
@@ -118,5 +148,23 @@ public class VariableFileAccessObject extends AbstractFileAccessObject {
         } else {
             return value;
         }
+    }
+
+    /**
+     * 対象項目の値を設定する.
+     * @param values 取得元の行データ
+     * @param row セット対象のレコード
+     * @param index インデックス
+     * @param map 対象の項目属性
+     * @return 次の開始位置
+     * @throws NeoSystemException システムエラー
+     */
+    private int setColumn(final String[] values, final Row row,
+                final int index, final Map<String, String> map)
+                        throws NeoSystemException {
+        String id = map.get("id");
+        String value = values[index];
+        row.put(id, value);
+        return index + 1;
     }
 }

@@ -70,4 +70,34 @@ public class VariableFileAccessObjectTest extends TestCase {
         dao.write(rec);
         assertEquals(testFileSize2, file.length());
     }
+
+    /**
+     * read()のテスト.
+     * @throws Exception システムエラー
+     */
+    public void testReadNormal() throws Exception {
+        final int testFileSize = 833;
+        final int testFileSize2 = 679;
+        File file = new File("D:\\tmp\\Sample.txt");
+        if (file.exists()) {
+            file.delete();
+        }
+        DAOFactory factory = DAOFactory.getInstance();
+        FileAccessObject dao = (FileAccessObject)
+                factory.create("VariableFileAccessObjectTest.xml");
+        dao.write(rec);
+        assertEquals(testFileSize, file.length());
+        RecordSet newRec = new RecordSet();
+        dao.read(newRec);
+        assertEquals(rec.toString().trim(), newRec.toString().trim());
+
+        dao = (FileAccessObject)
+                factory.create("VariableFileAccessObjectTest2.xml");
+        dao.setWriteMode(WriteMode.OVERWRITE);
+        dao.write(rec);
+        assertEquals(testFileSize2, file.length());
+        newRec = new RecordSet();
+        dao.read(newRec);
+        assertEquals(rec.toString().trim(), newRec.toString().trim());
+    }
 }
